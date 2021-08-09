@@ -2,13 +2,13 @@ local Array = {}
 
 function Array:array()
     Array._Data = {}
-    self.Size = 0
+    Array.Size = 0
     return self
 end
 
-function Array:push(inInt_num)
-    table.insert(self._Data, inInt_num)
-    self.Size = self.Size + 1
+function Array:push(in_Elm)
+    table.insert(self._Data, in_Elm)
+    self.Size = self.size + 1
 end
 
 function Array:pop()
@@ -19,23 +19,23 @@ function Array:pop()
     end
 
     table.remove(self._Data)
-    self.Size = int_Size - 1
+    self.size = self.size - 1 
 end
 
-function Array:insert(inInt_Pos, inInt_Num)
+function Array:insert(inInt_Pos, in_Elm)
     local int_Size = self.Size
-    if (inInt_Pos <= 0 or inInt_Pos > int_Size + 1) then
+    if (type(inInt_Pos) ~= "number" or inInt_Pos <= 0 or inInt_Pos > int_Size + 1) then
         print("Invalid position!")
         return
     end
 
-    table.insert(self._Data, inInt_Pos, inInt_Num)
+    table.insert(self._Data, inInt_Pos, in_Elm)
     self.Size = int_Size + 1
 end
 
 function Array:remove(inInt_Pos)
     local int_Size = self.Size
-    if (inInt_Pos <= 0 or inInt_Pos > int_Size) then
+    if (type(inInt_Pos) ~= "number" or inInt_Pos <= 0 or inInt_Pos > int_Size) then
         print("Invalid position!")
         return
     end
@@ -45,9 +45,7 @@ function Array:remove(inInt_Pos)
 end
 
 function Array:clear()
-    for int_Index = 1, self.Size do
-        table.remove(self._Data)
-    end
+    self._Data = {}
     self.Size = 0
 end
 
