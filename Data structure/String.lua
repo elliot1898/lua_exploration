@@ -6,7 +6,13 @@ function String:string(in_String)
         return
     end
 
-    self.str_Data = in_String
+    self._StrData = {}
+    local _Data = self._StrData
+    local int_Len = string.len(in_String)
+    for i = 1, int_Len do
+        _Data[i] = string.sub(in_String, i, i)
+    end
+    self.int_Length = int_Len
     return self
 end
 
@@ -20,10 +26,18 @@ function String:reset(in_String)
         return
     end
 
-    self.str_Data = in_String
+    self._StrData = {}
+    local _Data = self._StrData
+    local int_Len = string.len(in_String)
+    for i = 1, string.len(in_String) do
+        _Data[i] = string.sub(in_String, i, i)
+    end
+    self.int_Length = int_Len
 end
 
-function String:len() return string.len(self.str_Data) end
+function String:len()
+    return self.int_Length
+end
 
 function String:sub(inInt_Begin, inInt_End)
     if (type(inInt_Begin) ~= "number" or (type(inInt_End) ~= "nil" and type(inInt_End) ~= "number")) then
@@ -31,7 +45,18 @@ function String:sub(inInt_Begin, inInt_End)
         return
     end
 
-    return string.sub(self.str_Data, inInt_Begin, inInt_End)
+    local int_Length = self.int_Length
+    if (inInt_Begin < 0) then
+        inInt_Begin = int_Length + inInt_Begin + 1
+    end
+    if (inInt_End < 0) then
+        inInt_End = int_Length + inInt_End + 1
+    end
+    if () then
+        
+    end
+
+
 end
 
 function String:append(in_String)
