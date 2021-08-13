@@ -1,61 +1,90 @@
--- local Array = require ("Array")
+local Array = require("Array")
 local String = require("String")
+local List = require("List")
 
--- local _Array = Array:array()
+local _Array1 = Array:array()
+local _Array2 = Array:array()
 
--- _Array:pop()
--- _Array:output()
+_Array1:push(1)
+_Array2:push(2)
+_Array1:push(3)
+_Array2:push(4)
 
--- _Array:push(1)
--- _Array:output()
+_Array1:output()
+_Array2:output()
 
--- _Array:push(2)
--- _Array:output()
+_Array1:insert(100, 10)
 
--- _Array = Array:array()
--- _Array:output()
+_Array1:insert(1, 10)
+_Array2:insert(1, 10)
 
--- _Array:insert(100, 3)
--- _Array:output()
+_Array1:output()
+_Array2:output()
 
--- _Array:insert(1, 3)
--- _Array:output()
+_Array1:pop()
+_Array2:pop()
 
--- _Array:push(1)
--- _Array:output()
+_Array1:output()
+_Array2:output()
 
--- _Array:push(2)
--- _Array:output()
+_Array1:clear()
+_Array2:clear()
 
--- _Array:remove(100)
--- _Array:output()
+_Array1:output()
+_Array2:output()
 
--- _Array:remove(1)
--- _Array:output()
 
--- _Array:pop()
--- _Array:output()
 
--- _Array:clear()
--- _Array:output()
 
-local str_Test1 = String:string("test1")
-str_Test1:output()
+local _Test1 = String:string({"t", "e", "s", "t", "1"})
+local _Test2 = String:string({"t", "e", "s", "t", "2"})
 
-local str_Test2 = String:string("test2")
-str_Test2:output()
+_Test1:output()
+_Test2:output()
 
-str_Test1:reset("new test string")
-str_Test1:output()
+_Test1:reset({"t", "e", "s", "t", "3"})
+_Test1:output()
 
-local int_Len = str_Test1:len()
-print(int_Len)
+print(_Test1:len())
 
-local str_Sub = str_Test1:sub(1, 2)
-print(str_Sub)
+local _Sub = _Test1:sub(1, 2)
+_Sub:output()
 
-str_Test1:append("append string")
-str_Test1:output()
+_Test1:append({"a", "p", "p", "e", "n", "d"})
+_Test1:output()
 
-local bool_Equal = str_Test1:equal(str_Test2)
-print(bool_Equal)
+print(_Test1:equal(_Test2))
+
+
+
+
+local _List1 = List:list()
+local _List2 = List:list()
+
+local _Node1 = _List1:push(1)
+local _Node2 = _List1:push(2)
+_List2:push(3)
+
+_List1:output()
+_List2:output()
+
+_List1:insert(_Node1, 3)
+_List1:output()
+
+_List1:remove(_Node2)
+_List1:output()
+
+local _NodeHead = _List1:head()
+_NodeHead:output()
+
+local _NodeTail = _List1:tail()
+_NodeTail:output()
+
+local _Pre = _NodeTail:pre()
+_Pre:output()
+
+local _Next = _NodeHead:next()
+_Next:output()
+
+_List1:popAll()
+_List1:output()
