@@ -1,8 +1,9 @@
+local Array = require("Array")
+
 local String = {}
 
 function String:string(_InString)
-    if (type(_InString) ~= "table") then
-        print("Invalid parameter type!")
+    if (not self:checkString(_InString)) then
         return
     end
 
@@ -10,50 +11,28 @@ function String:string(_InString)
     setmetatable(_NewString, self)
     self.__index = self
 
-    _NewString._StrData = {}
+    _NewString._StrData = Array:array()
     local _StrData = _NewString._StrData
     local int_Length = 0
     for int_Index, str_Char in ipairs(_InString) do
-        if (type(str_Char) ~= "string") then
-            print("Invalid parameter!")
-            return
-        end
-        table.insert(_StrData, str_Char)
+        _StrData:push(str_Char)
         int_Length = int_Length + 1
     end
 
     _NewString.int_Length = int_Length
-
     return _NewString
 end
 
-function String:getString()
-    local str_Data = ""
-    for int_Index, str_Char in ipairs(self._StrData) do
-        str_Data = str_Data .. str_Char
-    end
-    return str_Data
-end
-
 function String:reset(_InString)
-    if (type(_InString) ~= "table") then
-        print("Invalid parameter type!")
+    if (not self:checkString(_InString)) then
         return
     end
 
-    self._StrData = {}
+    self._StrData =  Array:array()
     local _StrData = self._StrData
     local int_Length = 0
-
     for int_Index, str_Char in ipairs(_InString) do
-        if (type(str_Char) ~= "string") then
-            print("Invalid parameter!")
-            return
-        end
-    end
-
-    for int_Index, str_Char in ipairs(_InString) do
-        table.insert(_StrData, str_Char)
+        _StrData:push(str_Char)
         int_Length = int_Length + 1
     end
 
@@ -75,33 +54,30 @@ function String:sub(inInt_Begin, inInt_End)
         int_End = inInt_End
     end
 
-    local _NewString = {}
-    local _StrData = self._StrData
+    local _NewString = Array:array()
+    local _StrData = self._StrData._Data
     for i = inInt_Begin, int_End do
         if (_StrData[i] ~= nil) then
-            table.insert(_NewString, _StrData[i])
+            _NewString:push(_StrData[i])
         end
     end
 
-    return self:string(_NewString)
+    return self:string(_NewString._Data)
 end
 
 function String:append(_InString)
-    if (type(_InString) ~= "table") then
-        print("Invalid parameter type!")
+    if (not self:checkString(_InString)) then
         return
     end
 
+    local _StrData = self._StrData
+    local int_Length = 0
     for int_Index, str_Char in ipairs(_InString) do
-        if (type(str_Char) ~= "string") then
-            print("Invalid parameter!")
-            return
-        end
+        _StrData:push(str_Char)
+        int_Length = int_Length + 1
     end
 
-    for int_Index, str_Char in ipairs(_InString) do
-        table.insert(self._StrData, str_Char)
-    end
+    self.int_Length = int_Length
 end
 
 function String:equal(_InString)
@@ -118,7 +94,32 @@ function String:equal(_InString)
     return self:getString() == str_InString
 end
 
-function String:output()
+function String:getString()
+    local str_Result = ""
+    local _StrData = self._StrData._Data
+    for int_Index, str_Char in ipairs(_StrData) do
+        str_Result = str_Result .. str_Char
+    end
+    return str_Result
+end
+
+function String:checkString(_InString)
+    if (type(_InString) ~= "table") then
+        print("Invalid parameter type!")
+        return false
+    end
+
+    for int_Index, str_Char in ipairs(_InString) do
+        if (type(str_Char) ~= "string" or #str_Char ~= 1) then
+            print("Invalid parameter!")
+            return false
+        end
+    end
+
+    return true
+end
+
+function String:print()
     print(self:getString())
     print("**************")
 end

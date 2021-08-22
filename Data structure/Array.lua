@@ -10,8 +10,8 @@ function Array:array()
 end
 
 function Array:push(in_Elm)
-    table.insert(self._Data, in_Elm)
     self.int_Size = self.int_Size + 1
+    self._Data[self.int_Size] = in_Elm
 end
 
 function Array:pop()
@@ -21,7 +21,7 @@ function Array:pop()
         return
     end
 
-    table.remove(self._Data)
+    self._Data[self.int_Size] = nil
     self.int_Size = self.int_Size - 1
 end
 
@@ -32,7 +32,11 @@ function Array:insert(inInt_Pos, in_Elm)
         return
     end
 
-    table.insert(self._Data, inInt_Pos, in_Elm)
+    local _Data = self._Data
+    for i = int_Size, inInt_Pos, -1 do
+        _Data[i + 1] = _Data[i]
+    end
+    _Data[inInt_Pos] = in_Elm
     self.int_Size = int_Size + 1
 end
 
@@ -43,7 +47,10 @@ function Array:remove(inInt_Pos)
         return
     end
 
-    table.remove(self._Data, inInt_Pos)
+    local _Data = self._Data
+    for i = inInt_Pos, int_Size - 1 do
+        _Data[i] = _Data[i + 1]
+    end
     self.int_Size = int_Size - 1
 end
 
@@ -52,7 +59,7 @@ function Array:clear()
     self.int_Size = 0
 end
 
-function Array:output()
+function Array:print()
     for int_Index, int_Value in ipairs(self._Data) do
         print(int_Index, int_Value)
     end
