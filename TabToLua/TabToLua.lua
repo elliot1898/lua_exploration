@@ -1,19 +1,6 @@
 local str_TabFolder = "Tab_Config"
 local str_LuaFolder = "Lua_Config"
 
-local function getFileList(inStr_Path)                                  -- 返回传入参数文件夹下所有文件
-	local _FolderHandle = io.popen("dir /b " .. inStr_Path)
-	local _FileList = {}
-
-	if (_FolderHandle ~= nil) then
-		for file in _FolderHandle:lines() do
-			table.insert(_FileList, file)
-		end
-	end
-    _FolderHandle:close()
-	return _FileList
-end
-
 local function formatByPrefix(inStr_Elm, inInt_Index, in_Prefix)        -- 通过前缀，对表中元素的格式进行修饰
     if (inStr_Elm == "nil") then
         return
@@ -44,7 +31,7 @@ local function formatByPrefix(inStr_Elm, inInt_Index, in_Prefix)        -- 通�
     end
 end
 
-local function findKeyInTable(in_Key, in_Table)                         -- 在传入 Table 中查找 Key
+local function findKeyInTable(in_Key, in_Table)                         -- 在传入Table中查找Key
     local int_Index = 1
     local bool_Find = false
     for index, _KVTable in ipairs(in_Table) do
@@ -113,7 +100,7 @@ local function convertFileToTable(inStr_File)
         table.insert(_HeadNames, str_HeadName)
     end
 
-    local _DataTable = {}       -- 用来存表。由于要求结果按 Key 升序输出，所以存表时采用 _DataTable = {{key1, value1}, {key2, value2}} 的格式进行存储
+    local _DataTable = {}       -- 用来存表。由于要求结果按Key升序输出，所以存表时采用 _DataTable = {{key1, value1}, {key2, value2}} 的格式进行存储
 
     -- 开始存表
     local str_Row = file_Table:read()
@@ -137,7 +124,7 @@ local function convertFileToTable(inStr_File)
                 for i = 2, #_HeadNames do
                     local key = _HeadNames[i]
                     local value = formatByPrefix(_Row[i], i, _Prefixs)
-                    if (key ~= "comment" and value ~= nil) then     -- 注释列不读取
+                    if (key ~= "comment" and value ~= nil) then     -- 注释列和值为nil的不读取
                         local _Suffix = _Suffixs[i]
                         local p = _DataTable[int_Index][2]       -- p指针定位最终存储数据的位置
 
@@ -183,7 +170,7 @@ local function printTable(inInt_TabCount, in_Table)
         local key, value = _KVTable[1], _KVTable[2]
 
         if (type(value) == "table") then
-            if (next(value) == nil) then        -- 若value为空 Table，不输出此 key value
+            if (next(value) == nil) then        -- 若value为空Table，不输出此key value
                 goto continue
             end
             str_Table = str_Table .. "\n"
@@ -197,7 +184,7 @@ local function printTable(inInt_TabCount, in_Table)
         end
 
         if (type(value) == "table") then
-            str_Table = str_Table .. printTable(inInt_TabCount + 1, value)      -- 若 value 为 Table，递归调用 printTable
+            str_Table = str_Table .. printTable(inInt_TabCount + 1, value)      -- 若value为Table，递归调用printTable
         else
             str_Table = str_Table .. value .. "," .. "\n"
         end
@@ -207,12 +194,12 @@ local function printTable(inInt_TabCount, in_Table)
     return str_Table
 end
 
--- 将 Table 转化为字符串
+-- 将Table转化为字符串
 local function convertTableToString(inStr_File, in_DataTable)
     local str_Result =
     "local config = require(\"ecs.config\")" .. "\n" ..
     "local empty = {}" .. "\n" ..
-    "config(\"" .. inStr_File:match("[^.]+") .. "\"," .. "\n"..
+    "config(\"" .. inStr_File .. "\"," .. "\n"..
     "empty," .. "\n"
 
     str_Result = str_Result .. printTable(1, in_DataTable)
@@ -222,8 +209,7 @@ end
 
 -- 将字符串输出为Lua配置文件
 local function createLuaConfig(inStr_File, inStr_Table)
-    local str_File = inStr_File:match("[^.]+")
-    local str_OutFile = str_LuaFolder .. "/" .. str_File .. ".lua"
+    local str_OutFile = str_LuaFolder .. "/" .. inStr_File .. ".lua"
 
     local file_OutFile, str_Wrong1 = io.open(str_OutFile, "w")
     if (file_OutFile == nil) then
@@ -240,17 +226,31 @@ local function createLuaConfig(inStr_File, inStr_Table)
     file_OutFile:close()
 end
 
+local function getFileList(inStr_Path)                                  -- 返回传入参数文件夹下所有文件
+	local _FolderHandle = io.popen("dir /b " .. inStr_Path)
+	local _FileList = {}
+
+	if (_FolderHandle ~= nil) then
+		for file in _FolderHandle:lines() do
+			table.insert(_FileList, file)
+		end
+	end
+    _FolderHandle:close()
+	return _FileList
+end
+
 local function tabToLua()
     os.execute("rmdir /s /q " .. str_LuaFolder)
     os.execute("mkdir " .. str_LuaFolder)
 
     local _FileList = getFileList(str_TabFolder)
     for _, str_File in ipairs(_FileList) do
-        if (str_File:match("[^_]+") == "cfg") then          -- 只导前缀为 "cfg" 的文件
+        if (str_File:match("[^_]+") == "cfg") then          -- 只导前缀为"cfg"的文件
             local _DataTable = convertFileToTable(str_File)
             if (_DataTable ~= nil) then
-                local str_Table = convertTableToString(str_File, _DataTable)
-                createLuaConfig(str_File, str_Table)
+                local str_FileName = str_File:match("[^.]+")
+                local str_Table = convertTableToString(str_FileName, _DataTable)
+                createLuaConfig(str_FileName, str_Table)
             end
         end
     end
