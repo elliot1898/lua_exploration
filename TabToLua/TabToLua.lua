@@ -1,5 +1,8 @@
-local function getFileList()
-	local _FolderHandle = io.popen("dir /b Tab_Config")
+local str_TabFolder = "Tab_Config"
+local str_LuaFolder = "Lua_Config"
+
+local function getFileList(inStr_Path)                                  -- 返回传入参数文件夹下所有文件
+	local _FolderHandle = io.popen("dir /b " .. inStr_Path)
 	local _FileList = {}
 
 	if (_FolderHandle ~= nil) then
@@ -11,7 +14,7 @@ local function getFileList()
 	return _FileList
 end
 
-local function formatByPrefix(inStr_Elm, inInt_Index, in_Prefix)
+local function formatByPrefix(inStr_Elm, inInt_Index, in_Prefix)        -- 通过前缀，对表中元素的格式进行修饰
     if (inStr_Elm == "nil") then
         return
     end
@@ -41,7 +44,7 @@ local function formatByPrefix(inStr_Elm, inInt_Index, in_Prefix)
     end
 end
 
-local function findKeyInTable(in_Key, in_Table)
+local function findKeyInTable(in_Key, in_Table)                         -- 在传入 Table 中查找 Key
     local int_Index = 1
     local bool_Find = false
     for index, _KVTable in ipairs(in_Table) do
@@ -56,9 +59,10 @@ local function findKeyInTable(in_Key, in_Table)
     return int_Index, bool_Find
 end
 
+-- 将配置文件读取为 Table
 local function convertFileToTable(inStr_File)
     -- 获取文件句柄
-    local file_Table = io.open("Tab_Config/" .. inStr_File, "r")
+    local file_Table = io.open(str_TabFolder .. "/" .. inStr_File, "r")
     local str_Heads = file_Table:read()
     if (str_Heads == nil) then
         print("File is empty!")
@@ -78,33 +82,38 @@ local function convertFileToTable(inStr_File)
 
         local str_Format = _Temp[1]
         if (str_Format ~= "n" and str_Format ~= "s" and str_Format ~= "b" and str_Format ~= "u") then
-            print("Wrong format \"" .. str_Format .. "\"!")
+            print("Wrong format \"" .. str_Format .. "\" in file \"" .. inStr_File .. "\"!")
             return
         end
-
         table.insert(_Prefixs, str_Format)
-
-        local str_HeadName = _Temp[2]
-        if (str_HeadName:match("%d+") == str_HeadName) then
-            str_HeadName = tonumber(str_HeadName)
-        end
-        table.insert(_HeadNames, str_HeadName)
+        table.remove(_Temp, 1)
 
         local _Suffix = {}
-        if (_Temp[3] ~= nil) then
-            for str_Suffix in _Temp[3]:gmatch("[^@]+") do
+        if (_Temp[#_Temp]:sub(1, 1) == "@") then
+            for str_Suffix in _Temp[#_Temp]:gmatch("[^@]+") do
                 if (str_Suffix:match("%d+") == str_Suffix) then
                     str_Suffix = tonumber(str_Suffix)
                 end
                 table.insert(_Suffix, str_Suffix)
             end
+            table.remove(_Temp)
         end
-
         table.insert(_Suffixs, _Suffix)
-    end
-    file_Table:read()           -- 跳过备注行
 
-    local _DataTable = {}       -- 用来存表
+        local str_HeadName = ""
+        for index, value in ipairs(_Temp) do
+            str_HeadName = str_HeadName .. value
+            if (index ~= #_Temp) then
+                str_HeadName = str_HeadName .. "_"
+            end
+        end
+        if (str_HeadName:match("%d+") == str_HeadName) then
+            str_HeadName = tonumber(str_HeadName)
+        end
+        table.insert(_HeadNames, str_HeadName)
+    end
+
+    local _DataTable = {}       -- 用来存表。由于要求结果按 Key 升序输出，所以存表时采用 _DataTable = {{key1, value1}, {key2, value2}} 的格式进行存储
 
     -- 开始存表
     local str_Row = file_Table:read()
@@ -115,40 +124,41 @@ local function convertFileToTable(inStr_File)
             table.insert(_Row, str_Elm)
         end
 
-        local Key = formatByPrefix(_Row[1], 1, _Prefixs)
-        if (Key ~= nil) then
-            local int_Index, bool_Find = findKeyInTable(Key, _DataTable)
-            if (bool_Find) then
-                print("Exist two same ID!")
-                return
-            end
-            table.insert(_DataTable, int_Index, {Key, {}})
+        if (_Row[1] ~= "comment") then      -- 注释行不读取
+            local Key = formatByPrefix(_Row[1], 1, _Prefixs)
+            if (Key ~= nil) then
+                local int_Index, bool_Find = findKeyInTable(Key, _DataTable)
+                if (bool_Find) then
+                    print("Exist repeated ID \"" .. Key ..  "\" in file \"" .. inStr_File .. "\"!")
+                    return
+                end
+                table.insert(_DataTable, int_Index, {Key, {}})
 
-            for i = 2, #_HeadNames do
-                local key = _HeadNames[i]
-                local value = formatByPrefix(_Row[i], i, _Prefixs)
-                if (key ~= "comment" and value ~= nil) then
-                    local _Suffix = _Suffixs[i]
-                    local p = _DataTable[int_Index][2]       -- p指针定位最终存储数据的位置
+                for i = 2, #_HeadNames do
+                    local key = _HeadNames[i]
+                    local value = formatByPrefix(_Row[i], i, _Prefixs)
+                    if (key ~= "comment" and value ~= nil) then     -- 注释列不读取
+                        local _Suffix = _Suffixs[i]
+                        local p = _DataTable[int_Index][2]       -- p指针定位最终存储数据的位置
 
-                    for j = #_Suffix, 1, -1 do
-                        local SuffixKey = _Suffix[j]
-                        local index, bool_find = findKeyInTable(SuffixKey, p)
-                        if (not bool_find) then
-                            table.insert(p, index, {SuffixKey, {}})
+                        for j = #_Suffix, 1, -1 do
+                            local SuffixKey = _Suffix[j]
+                            local index, bool_find = findKeyInTable(SuffixKey, p)
+                            if (not bool_find) then
+                                table.insert(p, index, {SuffixKey, {}})
+                            end
+                            p = p[index][2]
                         end
-                        p = p[index][2]
-                    end
 
-                    local index, bool_find = findKeyInTable(key, p)
-                    if (bool_find) then
-                        print("Exist two same HeadName!")
-                        return
+                        local index, bool_find = findKeyInTable(key, p)
+                        if (bool_find) then
+                            print("Exist repeated HeadName \"" .. key .. "\" in file \"" .. inStr_File .. "\"!")
+                            return
+                        end
+                        table.insert(p, index, {key, value})
                     end
-                    table.insert(p, index, {key, value})
                 end
             end
-
         end
 
         str_Row = file_Table:read()
@@ -158,21 +168,22 @@ local function convertFileToTable(inStr_File)
     return _DataTable
 end
 
-local function printBlock(inInt_TabCount)
+local function printBlock(inInt_BlockCount)
     local str_Tab = ""
-    for i = 1, inInt_TabCount do
+    for i = 1, inInt_BlockCount do
         str_Tab = str_Tab .. "  "
     end
     return str_Tab
 end
 
+-- 将传入 Table 输出为 String
 local function printTable(inInt_TabCount, in_Table)
     local str_Table = "{" .. "\n"
     for _, _KVTable in ipairs(in_Table) do
         local key, value = _KVTable[1], _KVTable[2]
 
         if (type(value) == "table") then
-            if (next(value) == nil) then
+            if (next(value) == nil) then        -- 若value为空 Table，不输出此 key value
                 goto continue
             end
             str_Table = str_Table .. "\n"
@@ -186,7 +197,7 @@ local function printTable(inInt_TabCount, in_Table)
         end
 
         if (type(value) == "table") then
-            str_Table = str_Table .. printTable(inInt_TabCount + 1, value)
+            str_Table = str_Table .. printTable(inInt_TabCount + 1, value)      -- 若 value 为 Table，递归调用 printTable
         else
             str_Table = str_Table .. value .. "," .. "\n"
         end
@@ -196,6 +207,7 @@ local function printTable(inInt_TabCount, in_Table)
     return str_Table
 end
 
+-- 将 Table 转化为字符串
 local function convertTableToString(inStr_File, in_DataTable)
     local str_Result =
     "local config = require(\"ecs.config\")" .. "\n" ..
@@ -208,19 +220,20 @@ local function convertTableToString(inStr_File, in_DataTable)
     return str_Result
 end
 
+-- 将字符串输出为Lua配置文件
 local function createLuaConfig(inStr_File, inStr_Table)
     local str_File = inStr_File:match("[^.]+")
-    local str_OutFile = "Lua_Config/" .. str_File .. ".lua"
-    io.open("Lua_Config/", "w")
-    local file_OutFile, str_Wrong = io.open(str_OutFile, "w")
+    local str_OutFile = str_LuaFolder .. "/" .. str_File .. ".lua"
+
+    local file_OutFile, str_Wrong1 = io.open(str_OutFile, "w")
     if (file_OutFile == nil) then
-        print("open", str_Wrong)
+        print("open", str_Wrong1)
         return
     end
 
-    local file_OutFile1, str_Wrong1 = file_OutFile:write(inStr_Table)
+    local file_OutFile1, str_Wrong2 = file_OutFile:write(inStr_Table)
     if (file_OutFile1 == nil) then
-        print("write", str_Wrong1)
+        print("write", str_Wrong2)
         return
     end
 
@@ -228,13 +241,18 @@ local function createLuaConfig(inStr_File, inStr_Table)
 end
 
 local function tabToLua()
-    -- os.execute("del Lua_Config")
-    -- io.popen("del Lua_Config")
-    local _FileList = getFileList()
+    os.execute("rmdir /s /q " .. str_LuaFolder)
+    os.execute("mkdir " .. str_LuaFolder)
+
+    local _FileList = getFileList(str_TabFolder)
     for _, str_File in ipairs(_FileList) do
-        local _DataTable = convertFileToTable(str_File)
-        local str_Table = convertTableToString(str_File, _DataTable)
-        createLuaConfig(str_File, str_Table)
+        if (str_File:match("[^_]+") == "cfg") then          -- 只导前缀为 "cfg" 的文件
+            local _DataTable = convertFileToTable(str_File)
+            if (_DataTable ~= nil) then
+                local str_Table = convertTableToString(str_File, _DataTable)
+                createLuaConfig(str_File, str_Table)
+            end
+        end
     end
 end
 
