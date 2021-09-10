@@ -78,10 +78,11 @@ local function convertFileToTable(inStr_File)
         local _Suffix = {}
         if (_Temp[#_Temp]:sub(1, 1) == "@") then
             for str_Suffix in _Temp[#_Temp]:gmatch("[^@]+") do
+                local int_Suffix = nil
                 if (str_Suffix:match("%d+") == str_Suffix) then
-                    str_Suffix = tonumber(str_Suffix)
+                    int_Suffix = tonumber(str_Suffix)
                 end
-                table.insert(_Suffix, str_Suffix)
+                table.insert(_Suffix, int_Suffix or str_Suffix)
             end
             table.remove(_Temp)
         end
@@ -94,10 +95,11 @@ local function convertFileToTable(inStr_File)
                 str_HeadName = str_HeadName .. "_"
             end
         end
+        local int_HeadName = nil
         if (str_HeadName:match("%d+") == str_HeadName) then
-            str_HeadName = tonumber(str_HeadName)
+            int_HeadName = tonumber(str_HeadName)
         end
-        table.insert(_HeadNames, str_HeadName)
+        table.insert(_HeadNames, int_HeadName or str_HeadName)
     end
 
     local _DataTable = {}       -- 用来存表。由于要求结果按Key升序输出，所以存表时采用 _DataTable = {{key1, value1}, {key2, value2}} 的格式进行存储
@@ -152,6 +154,7 @@ local function convertFileToTable(inStr_File)
         int_RowIndex = int_RowIndex + 1
     end
 
+    file_Table:close()
     return _DataTable
 end
 
